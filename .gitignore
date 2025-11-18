@@ -1,0 +1,13 @@
+# Node
+node_modules
+.next
+.env*
+
+# .NET
+bin/
+obj/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
