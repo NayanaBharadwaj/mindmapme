@@ -25,7 +25,9 @@ import dagre from "dagre";
 import "./edges.css";
 import "./mindmap-editor.css";
 
-const API_BASE = "http://localhost:5261";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5261";
+
 
 const EDGE_STYLE = {
   stroke: "#4b5563", // Tailwind Gray-600
@@ -157,7 +159,9 @@ export default function MindMapEditor() {
   const [searching, setSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<NodeSearchResult[] | null>(
     null
+  // related nodes panel state
   );
+  const [relatedNodes, setRelatedNodes] = useState<NodeSearchResult[] | null>(null);
 
   // --- helper: snapshot current graph for Undo (deep clone) -----------------
   const recordSnapshot = useCallback(() => {
@@ -404,9 +408,25 @@ export default function MindMapEditor() {
     [recordSnapshot, saveParent]
   );
 
-  const handleNodeClick = useCallback((_: any, node: Node<NodeData>) => {
+  const handleNodeClick = useCallback(
+  async (_: any, node: Node<NodeData>) => {
     setSelectedNodeIds([node.id]);
-  }, []);
+
+    try {
+      const url = `${API_BASE}/api/MindMapNodes/${mindMapId}/${node.id}/related`;
+      const res = await fetch(url);
+
+      if (!res.ok) throw new Error(`Related nodes failed (${res.status})`);
+
+      const data = await res.json();
+      setRelatedNodes(data);
+    } catch (err) {
+      console.error(err);
+      setRelatedNodes(null);
+    }
+  },
+  [mindMapId]
+);
 
   const handleSelectionChange = useCallback((selection: any) => {
     const ids: string[] = (selection?.nodes ?? []).map((n: Node) => n.id);
@@ -999,6 +1019,59 @@ export default function MindMapEditor() {
           <Background gap={16} size={1} />
         </ReactFlow>
       </div>
+
+      {/* Related Ideas Panel */}
+{relatedNodes && (
+  <div
+    style={{
+      position: "absolute",
+      right: 20,
+      top: 80,
+      width: 260,
+      background: "#ffffff",
+      border: "1px solid #e5e7eb",
+      borderRadius: 12,
+      padding: "12px 14px",
+      boxShadow: "0 12px 32px rgba(0,0,0,0.08)",
+      zIndex: 40,
+      maxHeight: "70vh",
+      overflowY: "auto",
+    }}
+  >
+    <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
+      Related Ideas
+    </h3>
+
+    {relatedNodes.length === 0 && (
+      <p style={{ fontSize: 13, color: "#6b7280" }}>No related ideas found.</p>
+    )}
+
+    {relatedNodes.length > 0 && (
+      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+        {relatedNodes.map((r) => (
+          <li
+            key={r.id}
+            style={{
+              padding: "8px 10px",
+              borderRadius: 8,
+              border: "1px solid #e5e7eb",
+              marginBottom: 8,
+              cursor: "pointer",
+              background: "#f9fafb",
+            }}
+            onClick={() => handleCenterOnNode(r.id)}
+          >
+            <div style={{ fontSize: 14, fontWeight: 500 }}>{r.label}</div>
+            <div style={{ fontSize: 12, color: "#6b7280" }}>
+              Node ID: {r.id.slice(0, 6)}…
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+)}
+
 
       {contextMenu.visible && contextMenu.nodeId && (
         <div

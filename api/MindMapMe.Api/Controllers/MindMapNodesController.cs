@@ -5,7 +5,6 @@ using MindMapMe.Infrastructure.Persistence;
 using MindMapMe.Application.AI;
 using System.Linq;
 
-
 namespace MindMapMe.Api.Controllers
 {
     [ApiController]
@@ -14,13 +13,17 @@ namespace MindMapMe.Api.Controllers
     {
         private readonly AppDbContext _db;
         private readonly IEmbeddingService _embeddingService;
+        private readonly INodeSemanticSearchService _semanticSearch;
 
-        public MindMapNodesController(AppDbContext db, IEmbeddingService embeddingService)
+        public MindMapNodesController(
+            AppDbContext db,
+            IEmbeddingService embeddingService,
+            INodeSemanticSearchService semanticSearch)
         {
             _db = db;
             _embeddingService = embeddingService;
+            _semanticSearch = semanticSearch;
         }
-
 
         // GET: api/MindMapNodes/{mindMapId}
         [HttpGet("{mindMapId}")]
@@ -41,16 +44,15 @@ namespace MindMapMe.Api.Controllers
 
             // 🔥 Generate embedding using the node's label
             if (!string.IsNullOrWhiteSpace(node.Label))
-                {
+            {
                 node.Embedding = await _embeddingService.GetEmbeddingAsync(node.Label);
-                }
+            }
 
             _db.MindMapNodes.Add(node);
             await _db.SaveChangesAsync();
 
             return Ok(node);
         }
-
 
         // PUT: api/MindMapNodes/{id}/position
         [HttpPut("{id}/position")]
@@ -67,7 +69,7 @@ namespace MindMapMe.Api.Controllers
             return NoContent();
         }
 
-        // 🔹 NEW: update only the ParentId (for connections)
+        // 🔹 update only the ParentId (for connections)
         // PUT: api/MindMapNodes/{id}/parent
         [HttpPut("{id}/parent")]
         public async Task<IActionResult> UpdateParent(Guid id, [FromBody] UpdateParentDto dto)
@@ -104,47 +106,73 @@ namespace MindMapMe.Api.Controllers
             return Ok(existing);
         }
 
+        // 🔍 TEXT SEARCH (existing logic)
+        // GET: api/MindMapNodes/search?mindMapId=...&query=...&topK=10
         [HttpGet("search")]
         public async Task<IActionResult> SearchNodes(
-        [FromQuery] Guid mindMapId,
-        [FromQuery] string query,
-        [FromQuery] int topK = 10,
-        CancellationToken ct = default)
+            [FromQuery] Guid mindMapId,
+            [FromQuery] string query,
+            [FromQuery] int topK = 10,
+            CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(query))
-            return BadRequest("Query cannot be empty.");
+                return BadRequest("Query cannot be empty.");
 
             // 1) Get embedding for the search query
             var queryEmbedding = await _embeddingService.GetEmbeddingAsync(query, ct);
             if (queryEmbedding.Length == 0)
-            return Ok(Array.Empty<NodeSearchResult>());
+                return Ok(Array.Empty<NodeSearchResult>());
 
             // 2) Load nodes for this mind map that actually have embeddings
             var nodes = await _db.MindMapNodes
-            .Where(n => n.MindMapId == mindMapId && n.Embedding != null)
-            .ToListAsync(ct);
-
-            // Optional: safety cap if the table grows huge
-            // nodes = nodes.Take(1000).ToList();
+                .Where(n => n.MindMapId == mindMapId && n.Embedding != null)
+                .ToListAsync(ct);
 
             // 3) Compute cosine similarity in memory
             var results = nodes
-            .Select(n => new NodeSearchResult(
-                n.Id,
-                n.Label,
-                n.PositionX,
-                n.PositionY,
-                n.ParentId,
-                CosineSimilarity(queryEmbedding, n.Embedding!)
-            ))
-            .OrderByDescending(r => r.Score)
-            .Take(topK)
-            .ToList();
+                .Select(n => new NodeSearchResult(
+                    n.Id,
+                    n.Label,
+                    n.PositionX,
+                    n.PositionY,
+                    n.ParentId,
+                    CosineSimilarity(queryEmbedding, n.Embedding!)
+                ))
+                .OrderByDescending(r => r.Score)
+                .Take(topK)
+                .ToList();
 
             return Ok(results);
         }
 
+        // 🔗 RELATED NODES (Day 9 feature)
+        // GET: api/MindMapNodes/{mindMapId}/{nodeId}/related
+        [HttpGet("{mindMapId}/{nodeId}/related")]
+        public async Task<IActionResult> GetRelatedNodes(
+            Guid mindMapId,
+            Guid nodeId,
+            CancellationToken ct = default)
+        {
+            var related = await _semanticSearch.GetRelatedNodesAsync(
+                mindMapId,
+                nodeId,
+                10,
+                ct);
 
+            // Return a simple shape similar to search results (without score)
+            var results = related
+                .Select(n => new
+                {
+                    n.Id,
+                    n.Label,
+                    n.PositionX,
+                    n.PositionY,
+                    n.ParentId
+                })
+                .ToList();
+
+            return Ok(results);
+        }
 
         // DELETE: api/MindMapNodes/{id}
         [HttpDelete("{id}")]
@@ -178,33 +206,32 @@ namespace MindMapMe.Api.Controllers
             Guid? ParentId,
             double Score);
 
-            private static double CosineSimilarity(float[] a, float[] b)
+        private static double CosineSimilarity(float[] a, float[] b)
+        {
+            if (a == null || b == null || a.Length == 0 || b.Length == 0)
+                return 0.0;
+
+            var len = Math.Min(a.Length, b.Length);
+
+            double dot = 0;
+            double magA = 0;
+            double magB = 0;
+
+            for (int i = 0; i < len; i++)
             {
-                if (a == null || b == null || a.Length == 0 || b.Length == 0)
-                return 0.0;
+                var va = a[i];
+                var vb = b[i];
 
-                var len = Math.Min(a.Length, b.Length);
-
-                double dot = 0;
-                double magA = 0;
-                double magB = 0;
-
-                for (int i = 0; i < len; i++)
-                {
-                    var va = a[i];
-                    var vb = b[i];
-
-                    dot += va * vb;
-                    magA += va * va;
-                    magB += vb * vb;
-                }
-
-                if (magA == 0 || magB == 0)
-                return 0.0;
-
-                return dot / (Math.Sqrt(magA) * Math.Sqrt(magB));
+                dot += va * vb;
+                magA += va * va;
+                magB += vb * vb;
             }
 
+            if (magA == 0 || magB == 0)
+                return 0.0;
+
+            return dot / (Math.Sqrt(magA) * Math.Sqrt(magB));
+        }
     }
 }
 
