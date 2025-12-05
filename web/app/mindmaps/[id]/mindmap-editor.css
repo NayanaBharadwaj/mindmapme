@@ -1,0 +1,179 @@
+/* mindmap-editor.css */
+
+/* Root layout */
+.mm-root {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f9fafb; /* very light gray */
+  color: #111827;      /* gray-900 */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Toolbar */
+.mm-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.mm-toolbar-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.mm-toolbar-title span {
+  font-weight: 600;
+  color: #111827;
+}
+
+.mm-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mm-toolbar-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+/* Buttons */
+.mm-btn {
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 80ms ease,
+    color 120ms ease;
+}
+
+.mm-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  box-shadow: none;
+  transform: none;
+}
+
+.mm-btn:not(:disabled):hover {
+  background: #f3f4f6;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+  transform: translateY(-0.5px);
+}
+
+/* Button variants */
+.mm-btn-primary {
+  background: #4f46e5;   /* indigo-600 */
+  border-color: #4338ca;
+  color: #ffffff;
+}
+
+.mm-btn-primary:not(:disabled):hover {
+  background: #4338ca;
+  border-color: #3730a3;
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.4);
+}
+
+.mm-btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: #4b5563;
+}
+
+.mm-btn-ghost:not(:disabled):hover {
+  background: #e5e7eb;
+  border-color: #e5e7eb;
+}
+
+.mm-btn-danger {
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.mm-btn-danger:not(:disabled):hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+/* Canvas wrapper */
+.mm-canvas {
+  flex: 1;
+}
+
+/* React Flow node styling */
+.react-flow__node {
+  border-radius: 999px;
+  padding: 0.5rem 1.25rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #111827;
+  transition:
+    box-shadow 120ms ease,
+    transform 80ms ease,
+    border-color 120ms ease;
+}
+
+.react-flow__node:hover {
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.14);
+  transform: translateY(-1px);
+}
+
+.react-flow__node.selected {
+  border-color: #6366f1;
+  box-shadow:
+    0 0 0 2px rgba(129, 140, 248, 0.4),
+    0 16px 45px rgba(15, 23, 42, 0.18);
+}
+
+/* Handles on nodes (connection dots) */
+.react-flow__handle {
+  width: 10px;
+  height: 10px;
+  background: #111827;
+  border-radius: 999px;
+  border: 2px solid #ffffff;
+}
+
+/* Zoom controls tweak (optional) */
+.react-flow__controls {
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+}
+
+.react-flow__controls-button {
+  background: #ffffff;
+  border: none;
+  color: #4b5563;
+}
+
+.react-flow__controls-button:hover {
+  background: #f3f4f6;
+}

@@ -1,0 +1,8 @@
+.react-flow__edge-path {
+  transition: stroke 0.2s ease, stroke-width 0.2s ease;
+}
+
+.react-flow__edge-path:hover {
+  stroke: #2563eb !important;   /* Blue-600 */
+  stroke-width: 3 !important;
+}

@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MindMapMe.Domain;
+using MindMapMe.Domain.Entities;
+
 
 namespace MindMapMe.Infrastructure.Persistence;
 
@@ -11,4 +13,6 @@ public class AppDbContext : DbContext
 
     // This tells EF Core we have a MindMap table
     public DbSet<MindMap> MindMaps { get; set; } = null!;
+    public DbSet<MindMapNode> MindMapNodes { get; set; }
+
 }
