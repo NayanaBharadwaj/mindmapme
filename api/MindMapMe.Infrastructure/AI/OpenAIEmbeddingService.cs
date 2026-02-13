@@ -1,76 +1,76 @@
 using System.Net.Http;
-using System.Net.Http.Json;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.Configuration;
 using MindMapMe.Application.AI;
+using Microsoft.Extensions.Configuration;
 
-namespace MindMapMe.Infrastructure.AI
+namespace MindMapMe.Infrastructure.AI;
+
+/// <summary>
+/// Calls the OpenAI embeddings API and returns the vector as float[].
+/// This implementation owns its own HttpClient instance so that we don't
+/// need any special HttpClient registration in DI – only IConfiguration.
+/// </summary>
+public sealed class OpenAIEmbeddingService : IEmbeddingService
 {
-    public class OpenAIEmbeddingService : IEmbeddingService
+    private readonly HttpClient _httpClient;
+    private readonly string _apiKey;
+    private readonly string _embeddingModel;
+
+    public OpenAIEmbeddingService(IConfiguration configuration)
     {
-        private readonly HttpClient _httpClient;
-        private readonly string _apiKey;
+        _httpClient = new HttpClient();
 
-        public OpenAIEmbeddingService(HttpClient httpClient, IConfiguration configuration)
+        _apiKey = configuration["OpenAI:ApiKey"]
+                  ?? throw new InvalidOperationException("OpenAI:ApiKey is missing from configuration.");
+
+        // If you change the key name in appsettings / Azure config,
+        // keep this in sync.
+        _embeddingModel = configuration["OpenAI:EmbeddingModel"] ?? "text-embedding-3-small";
+    }
+
+    public async Task<float[]> GetEmbeddingAsync(string text, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(text))
         {
-            _httpClient = httpClient;
-
-            _apiKey = configuration["OpenAI:ApiKey"]
-                      ?? throw new InvalidOperationException("OpenAI:ApiKey is not configured.");
-
-            _httpClient.DefaultRequestHeaders.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _apiKey);
+            throw new ArgumentException("Text must not be empty.", nameof(text));
         }
 
-        public async Task<float[]> GetEmbeddingAsync(string text, CancellationToken cancellationToken = default)
+        var requestBody = new
         {
-            if (string.IsNullOrWhiteSpace(text))
-            return Array.Empty<float>();
+            model = _embeddingModel,
+            input = text
+        };
 
-            var body = new
-            {
-                model = "text-embedding-3-small",
-                input = text
-            };
+        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/embeddings");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+        request.Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
 
-            using var response = await _httpClient.PostAsJsonAsync(
-                "https://api.openai.com/v1/embeddings",
-                body,
-                cancellationToken);
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
 
-            if (!response.IsSuccessStatusCode)
-            {
-                // Read the body for logging / debugging
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-                Console.WriteLine($"OpenAI embeddings call failed: {(int)response.StatusCode} {response.StatusCode}");
-                Console.WriteLine(content);
+        var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
 
-                // Graceful degradation: for common quota / auth issues, just return empty embedding
-                if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests ||    // 429
-                    response.StatusCode == System.Net.HttpStatusCode.PaymentRequired ||    // 402 - no quota
-                    response.StatusCode == System.Net.HttpStatusCode.Forbidden ||          // 403 - project/permissions
-                    response.StatusCode == System.Net.HttpStatusCode.Unauthorized)         // 401 - bad key
-                {
-                    // Let the app continue; node will be created without an embedding
-                    return Array.Empty<float>();
-                }
+        var embeddingResponse = JsonSerializer.Deserialize<EmbeddingResponse>(responseJson)
+                               ?? throw new InvalidOperationException("Failed to parse embedding response.");
 
-                // For anything else, still throw so we notice unexpected bugs
-                response.EnsureSuccessStatusCode();
-            }
-
-            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            using var json = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-            var embedding = json.RootElement
-            .GetProperty("data")[0]
-            .GetProperty("embedding")
-            .EnumerateArray()
-            .Select(e => e.GetSingle())
-            .ToArray();
-
-            return embedding;
+        if (embeddingResponse.data is null || embeddingResponse.data.Length == 0)
+        {
+            throw new InvalidOperationException("Embedding response did not contain any data.");
         }
 
+        return embeddingResponse.data[0].embedding;
+    }
+
+    // DTOs that match the shape of the OpenAI embeddings response.
+    private sealed class EmbeddingResponse
+    {
+        public EmbeddingData[] data { get; set; } = Array.Empty<EmbeddingData>();
+    }
+
+    private sealed class EmbeddingData
+    {
+        public float[] embedding { get; set; } = Array.Empty<float>();
     }
 }

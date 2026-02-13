@@ -177,3 +177,44 @@
 .react-flow__controls-button:hover {
   background: #f3f4f6;
 }
+
+.mindmap-body {
+    overflow: visible !important;   /* 🔥 FIX CLIPPING */
+    position: relative;
+    z-index: 1;
+}
+
+/* --- FORCE REACT FLOW EDGES TO BE VISIBLE --- */
+
+.react-flow__edge {
+  display: block !important;
+}
+
+.react-flow__edge-path {
+  stroke: #ef4444 !important;      /* bright red */
+  stroke-width: 3 !important;
+  opacity: 1 !important;
+}
+
+/* labels on edges */
+.react-flow__edge-text {
+  fill: #111827 !important;
+  font-size: 10px !important;
+}
+
+.react-flow__edge-textbg {
+  fill: #fee2e2 !important;
+  stroke: #fecaca !important;
+}
+
+
+.mindmap-body {
+  position: relative;
+  z-index: 1;
+}
+
+.react-flow__renderer,
+.react-flow {
+  z-index: 50 !important;
+  position: relative;
+}

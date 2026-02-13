@@ -46,6 +46,12 @@ namespace MindMapMe.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Content")
+                        .HasColumnType("text");
+
+                    b.Property<float[]>("Embedding")
+                        .HasColumnType("real[]");
+
                     b.Property<string>("Label")
                         .IsRequired()
                         .HasColumnType("text");
@@ -62,9 +68,28 @@ namespace MindMapMe.Infrastructure.Migrations
                     b.Property<float>("PositionY")
                         .HasColumnType("real");
 
+                    b.Property<string>("Text")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("MindMapId");
+
                     b.ToTable("MindMapNodes");
+                });
+
+            modelBuilder.Entity("MindMapMe.Domain.Entities.MindMapNode", b =>
+                {
+                    b.HasOne("MindMapMe.Domain.Entities.MindMap", null)
+                        .WithMany("Nodes")
+                        .HasForeignKey("MindMapId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MindMapMe.Domain.Entities.MindMap", b =>
+                {
+                    b.Navigation("Nodes");
                 });
 #pragma warning restore 612, 618
         }

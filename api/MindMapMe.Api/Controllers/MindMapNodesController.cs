@@ -91,15 +91,29 @@ namespace MindMapMe.Api.Controllers
             var existing = await _db.MindMapNodes.FindAsync(id);
             if (existing == null) return NotFound();
 
-            existing.Label = node.Label;
+            // Normalize label to avoid “phantom changes” (trailing spaces etc.)
+            var oldLabelNorm = (existing.Label ?? "").Trim();
+            var newLabelNorm = (node.Label ?? "").Trim();
+
+            existing.Label = string.IsNullOrWhiteSpace(newLabelNorm) ? null : newLabelNorm;
             existing.PositionX = node.PositionX;
             existing.PositionY = node.PositionY;
             existing.ParentId = node.ParentId;
 
-            // 🔥 Recompute embedding if label changes
-            if (!string.IsNullOrWhiteSpace(node.Label))
+            // ✅ Recompute embedding ONLY if normalized label actually changed
+            if (!string.IsNullOrWhiteSpace(newLabelNorm) &&
+            !string.Equals(oldLabelNorm, newLabelNorm, StringComparison.Ordinal))
             {
-                existing.Embedding = await _embeddingService.GetEmbeddingAsync(node.Label);
+                try
+                {
+                    existing.Embedding = await _embeddingService.GetEmbeddingAsync(newLabelNorm);
+                }
+                catch (Exception ex)
+                {
+                    // Do NOT fail the node update if embeddings fail (prevents editor breaking on click/drag)
+                    // Optional: log ex here if you have a logger
+                    // _logger.LogWarning(ex, "Embedding update failed for node {NodeId}", id);
+                }
             }
 
             await _db.SaveChangesAsync();
@@ -147,32 +161,71 @@ namespace MindMapMe.Api.Controllers
 
         // 🔗 RELATED NODES (Day 9 feature)
         // GET: api/MindMapNodes/{mindMapId}/{nodeId}/related
-        [HttpGet("{mindMapId}/{nodeId}/related")]
-        public async Task<IActionResult> GetRelatedNodes(
-            Guid mindMapId,
-            Guid nodeId,
-            CancellationToken ct = default)
+        // 🔗 RELATED NODES (Day 9 feature, with fallback)
+// GET: api/MindMapNodes/{mindMapId}/{nodeId}/related
+[HttpGet("{mindMapId}/{nodeId}/related")]
+public async Task<IActionResult> GetRelatedNodes(
+    Guid mindMapId,
+    Guid nodeId,
+    CancellationToken ct = default)
+{
+    // 1) Try true AI-based related nodes (embeddings)
+    var related = await _semanticSearch.GetRelatedNodesAsync(
+        mindMapId,
+        nodeId,
+        10,
+        ct);
+
+    List<MindMapNode> final;
+
+    if (related != null && related.Any())
+    {
+        // ✅ Real AI-based relationships
+        final = related.ToList();
+    }
+    else
+    {
+        // 🔁 Fallback: if embeddings are missing or AI gives nothing,
+        // just return other nodes from the same mindmap.
+        final = await _db.MindMapNodes
+            .Where(n => n.MindMapId == mindMapId && n.Id != nodeId)
+            .OrderBy(n => n.Label)   // simple, stable ordering
+            .Take(10)
+            .ToListAsync(ct);
+    }
+
+    const double threshold = 0.40;
+
+    var selected = await _db.MindMapNodes
+        .AsNoTracking()
+        .FirstOrDefaultAsync(n => n.Id == nodeId && n.MindMapId == mindMapId, ct);
+
+    if (selected == null || selected.Embedding == null)
+    {
+        return Ok(Array.Empty<object>());
+    }
+
+    var results = final
+        .Where(n => n.Embedding != null)
+        .Where(n => !IsGenericHub(n.Label))
+        .Select(n => new
         {
-            var related = await _semanticSearch.GetRelatedNodesAsync(
-                mindMapId,
-                nodeId,
-                10,
-                ct);
+            nodeId = n.Id,
+            title = n.Label,
+            n.PositionX,
+            n.PositionY,
+            n.ParentId,
+            similarity = CosineSimilarity(selected.Embedding!, n.Embedding!)
+        })
+        .Where(x => x.similarity >= threshold)
+        .OrderByDescending(x => x.similarity)
+        .Take(10)
+        .ToList();
 
-            // Return a simple shape similar to search results (without score)
-            var results = related
-                .Select(n => new
-                {
-                    n.Id,
-                    n.Label,
-                    n.PositionX,
-                    n.PositionY,
-                    n.ParentId
-                })
-                .ToList();
+    return Ok(results);
 
-            return Ok(results);
-        }
+}
+
 
         // DELETE: api/MindMapNodes/{id}
         [HttpDelete("{id}")]
@@ -205,6 +258,18 @@ namespace MindMapMe.Api.Controllers
             float PositionY,
             Guid? ParentId,
             double Score);
+
+        private static bool IsGenericHub(string? label)
+        {
+            if (string.IsNullOrWhiteSpace(label)) return true;
+
+            var s = label.Trim().ToLowerInvariant();
+
+            return s is "overview" or "summary" or "key features" or "features"
+                || s.Contains("proposed solution")
+                || s.Contains("introduction")
+                || s.Contains("conclusion");
+        }
 
         private static double CosineSimilarity(float[] a, float[] b)
         {

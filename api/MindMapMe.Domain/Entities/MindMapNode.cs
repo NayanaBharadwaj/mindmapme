@@ -14,5 +14,10 @@ namespace MindMapMe.Domain.Entities
 
         // 👇 NEW — embeddings stored as Postgres real[] array
         public float[]? Embedding { get; set; }
+
+        public string? Content { get; set; }
+        public string? Text { get; set; }
+
+
     }
 }

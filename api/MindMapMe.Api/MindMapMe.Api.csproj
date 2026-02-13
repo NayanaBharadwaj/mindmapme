@@ -14,12 +14,19 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+    <PackageReference Include="OpenAI" Version="2.7.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="UglyToad.PdfPig" Version="1.7.0-custom-5" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MindMapMe.Application\MindMapMe.Application.csproj" />
     <ProjectReference Include="..\MindMapMe.Infrastructure\MindMapMe.Infrastructure.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 
 </Project>
