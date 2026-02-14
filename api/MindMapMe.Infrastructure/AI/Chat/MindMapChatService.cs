@@ -38,8 +38,8 @@ namespace MindMapMe.Infrastructure.AI.Chat
 
             _httpClient = new HttpClient();
 
-            _apiKey = configuration["OpenAI:ApiKey"]
-                      ?? throw new InvalidOperationException("OpenAI:ApiKey is missing from configuration.");
+            _apiKey = configuration["OpenAI:ApiKey"] ?? configuration["OpenAI__ApiKey"]
+                ?? throw new InvalidOperationException("OpenAI API key is missing from configuration (OpenAI:ApiKey / OpenAI__ApiKey).");
 
             // You can override this in appsettings / Azure config as OpenAI:ChatModel
             _chatModel = configuration["OpenAI:ChatModel"] ?? "gpt-4.1-mini";
