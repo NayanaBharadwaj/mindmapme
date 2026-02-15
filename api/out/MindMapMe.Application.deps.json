@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "MindMapMe.Application/1.0.0": {
+        "dependencies": {
+          "MindMapMe.Domain": "1.0.0"
+        },
+        "runtime": {
+          "MindMapMe.Application.dll": {}
+        }
+      },
+      "MindMapMe.Domain/1.0.0": {
+        "runtime": {
+          "MindMapMe.Domain.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "MindMapMe.Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MindMapMe.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
