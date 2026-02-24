@@ -38,7 +38,10 @@ builder.Services.AddCors(options =>
 // PostgreSQL DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseNpgsql(configuration.GetConnectionString("Default"));
+    options.UseNpgsql(
+        configuration.GetConnectionString("Default"),
+        npgsql => npgsql.MigrationsAssembly("MindMapMe.Infrastructure")
+    );
 });
 
 // OpenAI Embedding client
