@@ -8,11 +8,11 @@ https://mindmapme-frontend.onrender.com
 https://mindmapme.onrender.com/swagger
 
 ## Features
-• Import documents into structured knowledge maps
-• AI-assisted question answering
-• Evidence-backed answers
-• Semantic retrieval with embeddings
-• Interactive node-based visualization
+Import documents into structured knowledge maps
+AI-assisted question answering
+Evidence-backed answers
+Semantic retrieval with embeddings
+Interactive node-based visualization
 
 ## Tech Stack
 Frontend: Next.js + React Flow  
