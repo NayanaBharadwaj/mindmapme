@@ -22,4 +22,9 @@ https://mindmapme.onrender.com/swagger
 - Deployment: Render
 
 ## Architecture
-RAG pipeline with semantic retrieval over mind map nodes.
+
+MindMapMe uses a Retrieval-Augmented Generation (RAG) pipeline.  
+Documents are converted into structured mind map nodes and embedded using OpenAI embeddings.  
+
+User queries are embedded and matched against node embeddings using pgvector similarity search.  
+The most relevant nodes are retrieved and used as context for LLM responses, enabling evidence-backed answers and explainable reasoning.
