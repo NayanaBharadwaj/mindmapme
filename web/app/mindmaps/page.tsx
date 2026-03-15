@@ -6,6 +6,20 @@ import { useRouter } from "next/navigation";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5261";
 
+function authHeaders(extra: Record<string, string> = {}) {
+  let key = localStorage.getItem("mindmap_owner_key");
+
+  if (!key) {
+    key = crypto.randomUUID();
+    localStorage.setItem("mindmap_owner_key", key);
+  }
+
+  return {
+    "X-Owner-Key": key,
+    ...extra,
+  };
+}
+
 type MindMapDto = {
   id: string;
   title: string;
@@ -33,7 +47,9 @@ export default function MindMapsPage() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch(`${API_BASE}/api/MindMaps`);
+      const res = await fetch(`${API_BASE}/api/MindMaps`, {
+        headers: authHeaders(),
+      });
       if (!res.ok) throw new Error(`Failed to load mind maps (${res.status})`);
 
       const data: MindMapDto[] = await res.json();
@@ -62,7 +78,7 @@ export default function MindMapsPage() {
 
       const res = await fetch(`${API_BASE}/api/MindMaps`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
           title,
           description,
@@ -92,6 +108,7 @@ export default function MindMapsPage() {
 
       const res = await fetch(`${API_BASE}/api/MindMaps/${id}`, {
         method: "DELETE",
+        headers: authHeaders(),
       });
 
       if (!res.ok) throw new Error("Failed to delete mind map");
@@ -127,7 +144,7 @@ export default function MindMapsPage() {
 
       const res = await fetch(`${API_BASE}/api/MindMaps/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
           id,
           title: editTitle,
