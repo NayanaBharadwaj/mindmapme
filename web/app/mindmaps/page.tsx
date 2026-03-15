@@ -47,7 +47,7 @@ export default function MindMapsPage() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch(`${API_BASE}/api/MindMaps`, {
+      const res = await fetch(`${API_BASE}/api/mindmaps`, {
         headers: authHeaders(),
       });
       if (!res.ok) throw new Error(`Failed to load mind maps (${res.status})`);
@@ -76,7 +76,7 @@ export default function MindMapsPage() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch(`${API_BASE}/api/MindMaps`, {
+      const res = await fetch(`${API_BASE}/api/mindmaps`, {
         method: "POST",
         headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
@@ -106,7 +106,7 @@ export default function MindMapsPage() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch(`${API_BASE}/api/MindMaps/${id}`, {
+      const res = await fetch(`${API_BASE}/api/mindmaps/${id}`, {
         method: "DELETE",
         headers: authHeaders(),
       });
@@ -142,7 +142,7 @@ export default function MindMapsPage() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch(`${API_BASE}/api/MindMaps/${id}`, {
+      const res = await fetch(`${API_BASE}/api/mindmaps/${id}`, {
         method: "PUT",
         headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
