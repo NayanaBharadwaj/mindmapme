@@ -24,7 +24,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 
 // CORS – simple policy so local + Azure frontends can call the API
-builder.Services.AddCors(options =>
+/* builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
@@ -33,7 +33,7 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
-});
+}); */
 
 // PostgreSQL DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -67,7 +67,21 @@ builder.Services.AddSingleton<EmbeddingClient>(sp =>
 builder.Services.AddScoped<INodeSemanticSearchService, NodeSemanticSearchService>();
 builder.Services.AddScoped<ISemanticSearchService, SemanticSearchService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("frontend",
+        policy =>
+        {
+            policy
+                .WithOrigins("https://mindmapme-frontend.onrender.com")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
+
 var app = builder.Build();
+
+app.UseCors("frontend");
 
 using (var scope = app.Services.CreateScope())
 {
@@ -102,7 +116,7 @@ else
 // app.UseHttpsRedirection();
 
 // CORS for frontend
-app.UseCors("Frontend");
+// app.UseCors("Frontend");
 
 // Routing + controllers
 app.MapControllers();
