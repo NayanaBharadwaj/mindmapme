@@ -85,9 +85,15 @@ app.UseRouting();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    // Hotfix: ensure OwnerKey column exists in production even if migration did not apply
+    db.Database.ExecuteSqlRaw(@"
+        ALTER TABLE ""MindMaps""
+        ADD COLUMN IF NOT EXISTS ""OwnerKey"" text NOT NULL DEFAULT '';
+    ");
+
     db.Database.Migrate();
 }
-
 
 // ---------- HTTP pipeline ----------
 
