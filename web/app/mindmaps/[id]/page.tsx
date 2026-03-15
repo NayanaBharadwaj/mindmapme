@@ -44,6 +44,26 @@ import { searchMindMapNodes } from "../../../lib/api/mindMapNodes";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5261";
 
+const OWNER_KEY_STORAGE = "mindmap_owner_key";
+
+function getOwnerKey() {
+  if (typeof window === "undefined") return "";
+
+  let key = localStorage.getItem(OWNER_KEY_STORAGE);
+  if (!key) {
+    key = crypto.randomUUID();
+    localStorage.setItem(OWNER_KEY_STORAGE, key);
+  }
+  return key;
+}
+
+function authHeaders(extra?: HeadersInit): HeadersInit {
+  return {
+    ...extra,
+    "X-Owner-Key": getOwnerKey(),
+  };
+}
+
 const EDGE_STYLE = {
   stroke: "#4b5563",
   strokeWidth: 2.4,
@@ -483,7 +503,7 @@ function MindMapEditorInner() {
 
         await fetch(`${API_BASE}/api/MindMapNodes/${id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({
             id,
             mindMapId,
@@ -898,7 +918,9 @@ function MindMapEditorInner() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch(`${API_BASE}/api/MindMapNodes/${mindMapId}`);
+      const res = await fetch(`${API_BASE}/api/MindMapNodes/${mindMapId}`, {
+        headers: authHeaders(),
+      });
       if (!res.ok) {
         throw new Error(`Failed to load nodes (${res.status})`);
       }
@@ -1145,7 +1167,7 @@ function MindMapEditorInner() {
 
     const res = await fetch(`${API_BASE}/api/MindMapNodes/${connection.target}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders({"Content-Type": "application/json",}),
       body: JSON.stringify(updatedDto),
     });
 
@@ -1231,9 +1253,9 @@ function MindMapEditorInner() {
         const nodeId = nodeIds[0];
         (async () => {
           try {
-            const res = await fetch(
-              `${API_BASE}/api/MindMapNodes/${mindMapId}/${nodeId}/related`
-            );
+            const res = await fetch(`${API_BASE}/api/MindMapNodes/${mindMapId}/${nodeId}/related`, {
+              headers: authHeaders(),
+            })
             if (!res.ok) {
               setRelatedNodes([]);
               setShowRelatedPanel(false);
@@ -1357,13 +1379,14 @@ function MindMapEditorInner() {
             // Fetch context nodes once answer is complete
             fetch(`${API_BASE}/api/MindMaps/${mindMapId}/chat`, {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: authHeaders({
+                "Content-Type": "application/json",
+              }),
               body: JSON.stringify({
                 question: q,
                 topK: 6,
                 rootNodeId,
               }),
-
             })
             .then((res) => res.json())
             .then((data: ChatResponseDto) => {
@@ -1449,6 +1472,7 @@ function MindMapEditorInner() {
 
         const res = await fetch(`${API_BASE}/api/MindMaps/${mindMapId}/import`, {
           method: "POST",
+          headers: authHeaders(),
           body: fd,
         });
 
@@ -1526,7 +1550,10 @@ function MindMapEditorInner() {
       try {
         const res = await fetch(
           `${API_BASE}/api/MindMaps/${mindMapId}/import/${rootNodeId}/connections`,
-          { method: "POST" }
+          {
+            method: "POST",
+            headers: authHeaders(),
+          }
         );
 
         if (!res.ok) {
@@ -2077,7 +2104,10 @@ function MindMapEditorInner() {
 
       const res = await fetch(
         `${API_BASE}/api/MindMaps/${mindMapId}/summary?rootNodeId=${encodeURIComponent(rootNodeId)}`,
-        { method: "POST", headers: { Accept: "application/json" } }
+        {
+          method: "POST",
+          headers: authHeaders({ Accept: "application/json" }),
+        }
       );
 
       if (!res.ok) {
@@ -2109,9 +2139,9 @@ const handleGenerateAiEdges = useCallback(
         `${API_BASE}/api/graph/mindmaps/${mindMapId}?minScore=${AI_MIN_SCORE}&maxEdgesPerNode=${AI_MAX_EDGES_PER_NODE}`,
         {
           method: "GET",
-          headers: {
+          headers: authHeaders({
             Accept: "application/json",
-          },
+          }),
         }
       );
 
@@ -2237,7 +2267,7 @@ const handleGenerateAiEdges = useCallback(
 
       const res = await fetch(`${API_BASE}/api/MindMapNodes`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders({"Content-Type": "application/json",}),
         body: JSON.stringify(newRoot),
       });
 
@@ -2289,9 +2319,9 @@ const handleGenerateAiEdges = useCallback(
 
       const res = await fetch(`${API_BASE}/api/MindMapNodes`, {
         method: "POST",
-        headers: {
+        headers: authHeaders({
           "Content-Type": "application/json",
-        },
+        }),
         body: JSON.stringify(newNode),
       });
 
@@ -2345,7 +2375,7 @@ const handleGenerateAiEdges = useCallback(
 
           const res = await fetch(`${API_BASE}/api/MindMapNodes/${e.target}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: authHeaders({"Content-Type": "application/json",}),
             body: JSON.stringify(updatedDto),
           });
 
@@ -2386,6 +2416,7 @@ const handleGenerateAiEdges = useCallback(
     try {
       const res = await fetch(`${API_BASE}/api/MindMaps/${mindMapId}`, {
         method: "DELETE",
+        headers: authHeaders(),
       });
 
       if (!res.ok) {
@@ -2424,9 +2455,9 @@ const handleGenerateAiEdges = useCallback(
 
         const res = await fetch(`${API_BASE}/api/MindMapNodes/${nodeId}`, {
           method: "PUT",
-          headers: {
+          headers: authHeaders({
             "Content-Type": "application/json",
-          },
+          }),
           body: JSON.stringify(updatedDto),
         });
 
@@ -2474,9 +2505,9 @@ const handleGenerateAiEdges = useCallback(
 
         const res = await fetch(`${API_BASE}/api/MindMapNodes`, {
           method: "POST",
-          headers: {
+          headers: authHeaders({
             "Content-Type": "application/json",
-          },
+          }),
           body: JSON.stringify(newNode),
         });
 
@@ -3223,7 +3254,7 @@ const handleGenerateAiEdges = useCallback(
 
                   const res = await fetch(`${API_BASE}/api/MindMapNodes/${node.id}`, {
                     method: "PUT",
-                    headers: { "Content-Type": "application/json" },
+                    headers: authHeaders({"Content-Type": "application/json",}),
                     body: JSON.stringify({
                     id: node.id,
                     mindMapId,

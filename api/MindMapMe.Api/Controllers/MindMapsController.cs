@@ -36,6 +36,11 @@ public class MindMapsController : ControllerBase
         _embeddingService = embeddingService;
     }
 
+    private string? GetOwnerKey()
+    {
+        return Request.Headers["X-Owner-Key"].FirstOrDefault();
+    }
+
     private static List<string> SplitIntoSentences(string text)
     {
         if (string.IsNullOrWhiteSpace(text)) return new List<string>();
@@ -217,9 +222,16 @@ public class MindMapsController : ControllerBase
             return BadRequest("Title is required.");
         }
 
+        var ownerKey = GetOwnerKey();
+        if (string.IsNullOrWhiteSpace(ownerKey))
+        {
+            return BadRequest("Missing X-Owner-Key header.");
+        }
+
         var mindMap = new MindMap
         {
-            Title = request.Title.Trim()
+            Title = request.Title.Trim(),
+            OwnerKey = ownerKey
         };
 
         _db.MindMaps.Add(mindMap);
@@ -227,7 +239,6 @@ public class MindMapsController : ControllerBase
 
         var dto = new MindMapDto(mindMap.Id, mindMap.Title, mindMap.CreatedAt);
 
-        // Returns 201 Created with Location header pointing to GET /api/mindmaps/{id}
         return CreatedAtAction(
             nameof(GetMindMapById),
             new { id = mindMap.Id },
@@ -238,7 +249,15 @@ public class MindMapsController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<MindMapDto>> GetMindMapById(Guid id)
     {
-        var mindMap = await _db.MindMaps.FindAsync(id);
+        var ownerKey = GetOwnerKey();
+        if (string.IsNullOrWhiteSpace(ownerKey))
+        {
+            return BadRequest("Missing X-Owner-Key header.");
+        }
+
+        var mindMap = await _db.MindMaps
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == id && m.OwnerKey == ownerKey);
 
         if (mindMap is null)
         {
@@ -252,7 +271,14 @@ public class MindMapsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<MindMapDto>>> GetMindMaps()
     {
+        var ownerKey = GetOwnerKey();
+        if (string.IsNullOrWhiteSpace(ownerKey))
+        {
+            return BadRequest("Missing X-Owner-Key header.");
+        }
+
         var items = await _db.MindMaps
+            .Where(m => m.OwnerKey == ownerKey)
             .OrderByDescending(m => m.CreatedAt)
             .Select(m => new MindMapDto(m.Id, m.Title, m.CreatedAt))
             .ToListAsync();
@@ -269,7 +295,15 @@ public class MindMapsController : ControllerBase
             return BadRequest("Title is required.");
         }
 
-        var mindMap = await _db.MindMaps.FindAsync(id);
+        var ownerKey = GetOwnerKey();
+        if (string.IsNullOrWhiteSpace(ownerKey))
+        {
+            return BadRequest("Missing X-Owner-Key header.");
+        }
+
+        var mindMap = await _db.MindMaps
+            .FirstOrDefaultAsync(m => m.Id == id && m.OwnerKey == ownerKey);
+
         if (mindMap is null)
         {
             return NotFound();
@@ -285,7 +319,15 @@ public class MindMapsController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteMindMap(Guid id)
     {
-        var mindMap = await _db.MindMaps.FindAsync(id);
+        var ownerKey = GetOwnerKey();
+        if (string.IsNullOrWhiteSpace(ownerKey))
+        {
+            return BadRequest("Missing X-Owner-Key header.");
+        }
+
+        var mindMap = await _db.MindMaps
+            .FirstOrDefaultAsync(m => m.Id == id && m.OwnerKey == ownerKey);
+
         if (mindMap is null)
         {
             return NotFound();
@@ -294,7 +336,6 @@ public class MindMapsController : ControllerBase
         _db.MindMaps.Remove(mindMap);
         await _db.SaveChangesAsync();
 
-        // 204 No Content – standard response for a successful delete
         return NoContent();
     }
 
@@ -306,6 +347,21 @@ public class MindMapsController : ControllerBase
         [FromBody] MindMapChatRequestDto request,
         CancellationToken cancellationToken)
     {
+        var ownerKey = GetOwnerKey();
+        if (string.IsNullOrWhiteSpace(ownerKey))
+        {
+            return BadRequest("Missing X-Owner-Key header.");
+        }
+
+        var mindMap = await _db.MindMaps
+        .AsNoTracking()
+        .FirstOrDefaultAsync(m => m.Id == mindMapId && m.OwnerKey == ownerKey, cancellationToken);
+
+        if (mindMap is null)
+        {
+            return NotFound("Mind map not found.");
+        }
+
         if (mindMapId == Guid.Empty)
         {
             return BadRequest("mindMapId is required.");
@@ -489,6 +545,21 @@ public class MindMapsController : ControllerBase
         if (rootNodeId == null || rootNodeId == Guid.Empty)
             return BadRequest("rootNodeId is required.");
 
+        var ownerKey = GetOwnerKey();
+        if (string.IsNullOrWhiteSpace(ownerKey))
+        {
+            return BadRequest("Missing X-Owner-Key header.");
+        }
+
+        var mindMap = await _db.MindMaps
+        .AsNoTracking()
+        .FirstOrDefaultAsync(m => m.Id == mindMapId && m.OwnerKey == ownerKey, cancellationToken);
+
+        if (mindMap is null)
+        {
+            return NotFound("Mind map not found.");
+        }
+
         // 1) Load id + parent + text fields for ALL nodes once
         var all = await _db.MindMapNodes
             .AsNoTracking()
@@ -600,6 +671,20 @@ public class MindMapsController : ControllerBase
         Guid rootNodeId,
         CancellationToken ct = default)
     {
+        var ownerKey = GetOwnerKey();
+        if (string.IsNullOrWhiteSpace(ownerKey))
+        {
+            return BadRequest("Missing X-Owner-Key header.");
+        }
+
+        var mindMap = await _db.MindMaps
+        .AsNoTracking()
+        .FirstOrDefaultAsync(m => m.Id == mindMapId && m.OwnerKey == ownerKey, ct);
+
+        if (mindMap is null)
+        {
+            return NotFound("Mind map not found.");
+        }
         // 1) Get imported nodes under this root (root + children)
         var importedNodes = await _db.MindMapNodes
             .AsNoTracking()
@@ -712,7 +797,15 @@ public class MindMapsController : ControllerBase
         if (mindMapId == Guid.Empty) return BadRequest("mindMapId is required.");
         if (file is null || file.Length == 0) return BadRequest("file is required.");
 
-        var mindMap = await _db.MindMaps.FindAsync(new object[] { mindMapId }, cancellationToken);
+        var ownerKey = GetOwnerKey();
+        if (string.IsNullOrWhiteSpace(ownerKey))
+        {
+            return BadRequest("Missing X-Owner-Key header.");
+        }
+
+        var mindMap = await _db.MindMaps
+            .FirstOrDefaultAsync(m => m.Id == mindMapId && m.OwnerKey == ownerKey, cancellationToken);
+
         if (mindMap is null) return NotFound("Mind map not found.");
 
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
