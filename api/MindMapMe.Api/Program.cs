@@ -82,7 +82,6 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseRouting();
-app.UseCors("frontend");
 
 using (var scope = app.Services.CreateScope())
 {
@@ -116,10 +115,8 @@ else
 // If you decide to force HTTPS later, you can re-enable this:
 // app.UseHttpsRedirection();
 
-// CORS for frontend
-// app.UseCors("Frontend");
+app.UseCors("frontend");
 
-// Routing + controllers
 app.MapControllers();
 
 app.Run();
