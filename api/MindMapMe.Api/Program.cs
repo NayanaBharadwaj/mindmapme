@@ -69,14 +69,13 @@ builder.Services.AddScoped<ISemanticSearchService, SemanticSearchService>();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("frontend",
-        policy =>
-        {
-            policy
-                .WithOrigins("https://mindmapme-frontend.onrender.com")
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-        });
+    options.AddPolicy("frontend", policy =>
+    {
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
 });
 
 var app = builder.Build();
