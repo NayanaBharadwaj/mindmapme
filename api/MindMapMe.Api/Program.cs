@@ -81,6 +81,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseRouting();
 app.UseCors("frontend");
 
 using (var scope = app.Services.CreateScope())
