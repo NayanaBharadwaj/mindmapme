@@ -12,6 +12,16 @@ https://mindmapme-frontend.onrender.com
 Backend API
 https://mindmapme.onrender.com/swagger
 
+## Demo Test Files
+
+You can use the same documents shown in the demo video to test the system.
+
+Sample files are available here:
+
+https://github.com/NayanaBharadwaj/mindmapme/tree/main/sample-data
+
+Upload these files in the application to generate mind maps and test semantic search.
+
 ## Main Features
 
 - AI-powered mind map generation
