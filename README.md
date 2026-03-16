@@ -69,5 +69,6 @@ Start frontend:
 - Graph visualization enhancements
 
 👩‍💻 Author
+
 Built by
-### Nayana Agrahara Dattatri
+Nayana Agrahara Dattatri
