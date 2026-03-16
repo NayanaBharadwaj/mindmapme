@@ -20,7 +20,7 @@ https://mindmapme.onrender.com/swagger
 - AI-assisted question answering
 - Evidence-backed responses using retrieved context
 - Private mind maps per user
-- Shareable links for collaboration
+- Shareable links for viewing and exploring specific mind maps
 - Responsive modern UI
 
 ## Tech Stack
