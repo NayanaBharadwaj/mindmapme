@@ -11,6 +11,7 @@ A short walkthrough showing how MindMapMe converts text into a structured knowle
 https://www.linkedin.com/posts/nayana-agrahara-dattatri-06761614a_ai-fullstackdevelopment-rag-ugcPost-7439430805027860480-lfdg?utm_source=share&utm_medium=member_desktop&rcm=ACoAACQK4c8Bm6RDUvZFkfo8RKIDua1xp243pRY
 
 Or try the live application:
+
 Frontend  
 https://mindmapme-frontend.onrender.com
 
