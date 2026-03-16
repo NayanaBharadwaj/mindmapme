@@ -44,6 +44,7 @@ The most relevant nodes are retrieved and used as context for LLM responses, ena
 
 ## Privacy Model
 Each mind map is associated with an OwnerKey to ensure user-scoped access.
+
 Users can:
 - keep mind maps private
 - share specific maps via generated links
@@ -69,4 +70,4 @@ Start frontend:
 
 👩‍💻 Author
 Built by
-# Nayana Agrahara Dattatri
+### Nayana Agrahara Dattatri
