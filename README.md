@@ -69,8 +69,8 @@ Start backend:
 
 Start frontend:
 - cd web
-- npm install
-- npm run dev
+- pnpm install
+- pnpm dev
 
 ## Future Improvements
 
