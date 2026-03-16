@@ -5,11 +5,15 @@ Turn ideas into structured visual knowledge graphs using semantic retrieval and 
 
 Next.js • ASP.NET Core • PostgreSQL • RAG • Semantic Search
 
-## Live Demo
-Frontend
-https://mindmapme-frontend.onrender.com
+## 🎥 Demo
+A short walkthrough showing how MindMapMe converts text into a structured knowledge graph and enables semantic exploration.
+▶ Demo Video  
+https://www.linkedin.com/posts/nayana-agrahara-dattatri-06761614a_ai-fullstackdevelopment-rag-ugcPost-7439430805027860480-lfdg?utm_source=share&utm_medium=member_desktop&rcm=ACoAACQK4c8Bm6RDUvZFkfo8RKIDua1xp243pRY
 
-Backend API
+Or try the live application:
+Frontend  
+https://mindmapme-frontend.onrender.com
+Backend API 
 https://mindmapme.onrender.com/swagger
 
 ## Demo Test Files
