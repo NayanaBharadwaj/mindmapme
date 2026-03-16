@@ -1,7 +1,10 @@
 # MindMapMe 🧠
 AI-Powered Knowledge Mapping Platform
 Turn ideas into structured visual knowledge graphs.
-Next.js • ASP.NET Core • PostgreSQL • RAG • Semantic Search
+- Next.js
+- ASP.NET Core
+- PostgreSQL
+- RAG • Semantic Search
 
 ## MindMapMe
 AI-powered mind mapping platform that converts unstructured ideas into structured knowledge graphs with semantic search.
