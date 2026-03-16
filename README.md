@@ -1,5 +1,6 @@
 # MindMapMe 🧠
-AI-Powered Knowledge Mapping Platform
+AI-Powered Knowledge Mapping Platform.
+
 Turn ideas into structured visual knowledge graphs.
 - Next.js
 - ASP.NET Core
