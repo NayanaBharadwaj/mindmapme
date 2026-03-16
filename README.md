@@ -1,33 +1,30 @@
 # MindMapMe 🧠
-AI-Powered Knowledge Mapping Platform.
+AI-Powered Knowledge Mapping Platform
 
-Turn ideas into structured visual knowledge graphs.
-- Next.js
-- ASP.NET Core
-- PostgreSQL
-- RAG • Semantic Search
+Turn ideas into structured visual knowledge graphs using semantic retrieval and AI-assisted reasoning.
 
-## MindMapMe
-AI-powered mind mapping platform that converts unstructured ideas into structured knowledge graphs with semantic search.
-
-MindMapMe helps users visually organize concepts while using AI-powered retrieval to explore relationships between ideas.
+Next.js • ASP.NET Core • PostgreSQL • RAG • Semantic Search
 
 ## Live Demo
+Frontend
 https://mindmapme-frontend.onrender.com
 
-## Backend API
+Backend API
 https://mindmapme.onrender.com/swagger
 
 ## Main Features
+
 - AI-powered mind map generation
 - Interactive node editing and exploration
 - Semantic search across mind map nodes
-- Private mind maps per user
-- Responsive modern UI
 - AI-assisted question answering
-- Evidence-backed answers
+- Evidence-backed responses using retrieved context
+- Private mind maps per user
+- Shareable links for collaboration
+- Responsive modern UI
 
 ## Tech Stack
+
 - Frontend: Next.js, React, TypeScript
 - Backend: ASP.NET Core (.NET 8), Entity Framework Core
 - Database: PostgreSQL, pgvector
@@ -36,13 +33,25 @@ https://mindmapme.onrender.com/swagger
 
 ## Architecture
 
-MindMapMe uses a Retrieval-Augmented Generation (RAG) pipeline.  
-Documents are converted into structured mind map nodes and embedded using OpenAI embeddings.  
+MindMapMe implements a Retrieval-Augmented Generation (RAG) pipeline.
 
-User queries are embedded and matched against node embeddings using pgvector similarity search.  
-The most relevant nodes are retrieved and used as context for LLM responses, enabling evidence-backed answers and explainable reasoning.
+Documents are transformed into structured mind map nodes and embedded using OpenAI embeddings.
+
+When a user submits a query:
+
+1. The query is converted into an embedding
+2. pgvector performs similarity search across node embeddings
+3. The most relevant nodes are retrieved
+4. Retrieved context is provided to the language model
+
+This enables:
+
+- semantic search across ideas
+- explainable AI responses
+- evidence-backed answers
 
 ## Privacy Model
+
 Each mind map is associated with an OwnerKey to ensure user-scoped access.
 
 Users can:
@@ -50,6 +59,7 @@ Users can:
 - share specific maps via generated links
 
 ## Local Development
+
 Clone repository
 git clone https://github.com/NayanaBharadwaj/mindmapme.git
 
@@ -63,13 +73,13 @@ Start frontend:
 - npm run dev
 
 ## Future Improvements
-- Derive map even though there are other elements, such as diagrams, along with plain texts
-- Real-time collaboration
-- Export to PDF / Markdown
-- Graph visualization enhancements
 
-👩‍💻 Author
+- Support structured extraction from diagrams and mixed media (not only plain text)
+- Real-time collaborative editing
+- Export mind maps to PDF / Markdown
+- Enhanced graph visualization
 
-Built by
+## Author
 
-Nayana Agrahara Dattatri
+Built by  
+**Nayana Agrahara Dattatri**
